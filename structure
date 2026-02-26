@@ -1,0 +1,32 @@
+/sentinel-ai-workspace
+├── /backend                 # (Node.js + TypeScript + Express)
+│   ├── /src
+│   │   ├── /config          # Google Auth, JWT, Redis Config
+│   │   ├── /controllers     # Handling Requests (Auth, Scans, Projects)
+│   │   ├── /services        # Logic (Gemini API, File Processing)
+│   │   ├── /routes          # Express Routes
+│   │   ├── /middlewares     # AuthGuard, ErrorHandler
+│   │   ├── /workers         # BullMQ Workers (Background Analysis)
+│   │   ├── /queues          # BullMQ Queue Definitions
+│   │   ├── /types           # TypeScript Interfaces/Types
+│   │   └── app.ts           # Entry point
+│   ├── /prisma              # Database Folder
+│   │   └── schema.prisma    # Your DB Schema
+│   ├── .env                 # Backend Secrets (API Keys, DB URL)
+│   ├── package.json
+│   └── tsconfig.json
+│
+├── /frontend                # (Next.js + Tailwind + Shadcn)
+│   ├── /src
+│   │   ├── /app             # Next.js App Router (Pages: /projects, /scans)
+│   │   ├── /components      # Reusable UI (Sidebar, ScoreGauge, Cards)
+│   │   ├── /hooks           # Custom React Hooks (useAuth, useScans)
+│   │   ├── /services        # API Calls to Backend (Axios/Fetch)
+│   │   └── /lib             # Utils (Tailwind Merge, Formatters)
+│   ├── .env.local           # Frontend Env (Backend API URL)
+│   ├── package.json
+│   └── tailwind.config.js
+│
+├── .gitignore               # Ignore node_modules, .env, etc.
+├── README.md                # Project Documentation
+└── package.json             # (Optional) Root scripts for the workspace
