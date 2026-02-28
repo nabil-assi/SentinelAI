@@ -1,0 +1,99 @@
+// schema.prisma
+
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// --- المستخدمين (User Management) ---
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password      String?   // خليه اختياري لدعم دخول Google
+  name          String?
+  image         String?   // صورة البروفايل من Google
+  
+  // حقول الـ Auth
+  provider      AuthProvider @default(EMAIL)
+  googleId      String?      @unique
+
+  role          UserRole  @default(FREE)
+  projects      Project[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+enum AuthProvider {
+  EMAIL
+  GOOGLE
+}
+
+enum UserRole {
+  FREE
+  PRO
+  ADMIN
+}
+
+// --- المشاريع (Project Management) ---
+model Project {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  repoUrl     String?  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scans       Scan[]
+  createdAt   DateTime @default(now())
+}
+
+// --- عمليات الفحص (The Scan Engine) ---
+model Scan {
+  id              String           @id @default(uuid())
+  status          ScanStatus       @default(PENDING)
+  fileType        String           // مثل "package.json"
+  fileName        String
+  
+  // مخرجات الـ AI والنتائج التقنية
+  securityScore   Int?             // الدرجة من 100
+  summary         String?          @db.Text
+  aiInsights      Json?            // لتخزين الـ JSON الكامل من Gemini
+  
+  vulnerabilities Vulnerability[]
+  
+  projectId       String
+  project         Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  completedAt     DateTime?
+  createdAt       DateTime         @default(now())
+}
+
+enum ScanStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+// --- الثغرات (Security Vulnerabilities) ---
+model Vulnerability {
+  id          String   @id @default(uuid())
+  scanId      String
+  scan        Scan     @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  
+  libraryName String?
+  severity    Severity @default(MEDIUM)
+  title       String
+  description String   @db.Text
+  recommendation String @db.Text // نصيحة الـ AI للحل
+  cveId       String?  // اختياري في حال وجود مرجع عالمي
+}
+
+enum Severity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
