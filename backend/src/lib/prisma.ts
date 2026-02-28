@@ -1,16 +1,22 @@
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { Pool } from 'pg';
+import pkg from 'pg';
+const { Pool } = pkg;
+import * as dotenv from 'dotenv';
 
-// إعداد الاتصال بـ PostgreSQL
+dotenv.config();
+
 const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error("❌ DATABASE_URL is missing from .env file!");
+}
+
 const pool = new Pool({ connectionString });
 const adapter = new PrismaPg(pool);
 
-// إنشاء نسخة الـ Client مع الـ Adapter
 export const prisma = new PrismaClient({ adapter });
 
-// اختبار بسيط للاتصال (اختياري)
 prisma.$connect()
-  .then(() => console.log("✅ Prisma connected successfully to PostgreSQL (v7)"))
-  .catch((err) => console.error("❌ Prisma connection error:", err));
+  .then(() => console.log("✅ Prisma connected successfully!"))
+  .catch((err) => console.error("❌ Connection error:", err));

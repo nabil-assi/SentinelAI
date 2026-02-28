@@ -17,6 +17,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(errorHandler);
 // Routes
 
+  console.log("Database URL is:", process.env.DATABASE_URL);
+
 app.use('/api/auth', authRoutes);
 
 
@@ -24,9 +26,9 @@ app.get('/health', (req: Request, res: Response) => {
     res.send('Server is healthy');
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(process.env.PORT || 3000, () => {
-    console.log(`Server is running on port ${process.env.PORT || 3000}`);
+const PORT = process.env.PORT || 5000;
+app.listen(process.env.PORT || 5000, () => {
+    console.log(`Server is running on port ${process.env.PORT || 5000}`);
 });
 
 export default app;
