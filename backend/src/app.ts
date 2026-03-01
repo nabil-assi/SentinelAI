@@ -10,7 +10,12 @@ import authRoutes from './routes/authRoute.ts';
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:8080', 
+  credentials: true, 
+//     methods: ['GET', 'POST', 'PUT', 'DELETE'],
+//   allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -23,7 +28,7 @@ app.use('/api/auth', authRoutes);
 
 
 app.get('/health', (req: Request, res: Response) => {
-    res.send('Server is healthy');
+    res.send('Server is healthy and runnig perfectly');
 });
 
 const PORT = process.env.PORT || 5000;
