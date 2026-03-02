@@ -31,10 +31,7 @@ export default function Login() {
 
     try {
       setLoading(true);
-      console.log("Sending login request:", {
-        email: email.trim(),
-        password: password ? "[HIDDEN]" : "empty",
-      });
+     
 
       const response = await api.post("auth/login", {
         email: email.trim(),
