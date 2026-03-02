@@ -13,7 +13,8 @@ export const protect = (req: Request, res: Response, next: NextFunction) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || "default_secret_key") as { id: string, email: string };
     (req as any).user = decoded;
     next();
-  } catch (error) {
-    return res.status(403).json({ message: "Invalid Token" });
+  } catch (error: any) {
+    console.error("JWT Verification Error:", error.message); 
+    return res.status(403).json({ message: "Invalid Token", error: error.message });
   }
 };

@@ -9,6 +9,9 @@ dotenv.config();
 
 import authRoutes from './routes/authRoute.ts';
 import projectRoutes from './routes/projectRoute.ts';
+import scanRoutes from './routes/scanRoute.ts';
+
+
 const app = express();
 
 // Middleware
@@ -29,6 +32,7 @@ app.use(cookieParser());
 
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
+app.use('/api/scan', scanRoutes);
 
 
 app.get('/health', (req: Request, res: Response) => {
