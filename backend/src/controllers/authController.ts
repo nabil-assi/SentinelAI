@@ -21,6 +21,7 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
   res.status(201).json({ message: "User created successfully", userId: user.id, success: true });
 
 });
+
 export const login = asyncHandler(async (req: Request, res: Response) => {
   const { email, password } = req.body;
   const user = await prisma.user.findUnique({ where: { email } });

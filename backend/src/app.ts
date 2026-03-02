@@ -3,10 +3,12 @@ import type { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 import { errorHandler } from './middlewares/globalErrorHandler.ts';
 dotenv.config();
 
 import authRoutes from './routes/authRoute.ts';
+import projectRoutes from './routes/projectRoute.ts';
 const app = express();
 
 // Middleware
@@ -20,11 +22,13 @@ app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(errorHandler);
+app.use(cookieParser());
 // Routes
 
   console.log("Database URL is:", process.env.DATABASE_URL);
 
 app.use('/api/auth', authRoutes);
+app.use('/api/projects', projectRoutes);
 
 
 app.get('/health', (req: Request, res: Response) => {
