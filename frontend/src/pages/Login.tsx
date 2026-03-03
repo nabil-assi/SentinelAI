@@ -31,7 +31,6 @@ export default function Login() {
 
     try {
       setLoading(true);
-     
 
       const response = await api.post("auth/login", {
         email: email.trim(),
@@ -40,8 +39,11 @@ export default function Login() {
 
       if (response.data) {
         if (response.data.success === true) {
-          if (response.data.data?.token) {
-            localStorage.setItem("token", response.data.data.token);
+          if (response.data.token) {
+            localStorage.setItem("token", response.data.token);
+            console.log("Token saved successfully!");
+          } else {
+            console.error("Token not found in response:", response.data);
           }
           navigate("/dashboard");
         } else {
