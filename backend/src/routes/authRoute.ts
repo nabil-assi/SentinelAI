@@ -8,11 +8,9 @@ router.post('/register', register);
 router.get('/users', allUsers);
 router.post('/login', login);
 
-// مسار البداية: يوجه المستخدم لجوجل
-router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+ router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
-// مسار العودة: جوجل بيرجع المستخدم لهون
-// بنستخدم passport كميدل وير أولاً، وبعدين بننادي الكونترولر تبعنا
+ 
 router.get(
     '/google/callback',
     passport.authenticate('google', { session: false, failureRedirect: 'http://localhost:3000/login' }),
