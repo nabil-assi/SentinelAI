@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var express_1 = require("express");
+var authController_ts_1 = require("../controllers/authController.ts");
+var passport_1 = require("passport");
+var router = (0, express_1.Router)();
+router.post('/register', authController_ts_1.register);
+router.get('/users', authController_ts_1.allUsers);
+router.post('/login', authController_ts_1.login);
+router.get('/google', passport_1.default.authenticate('google', { scope: ['profile', 'email'] }));
+router.get('/google/callback', passport_1.default.authenticate('google', { session: false, failureRedirect: 'http://localhost:3000/login' }), authController_ts_1.googleAuthCallback);
+exports.default = router;

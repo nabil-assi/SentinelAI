@@ -129,6 +129,8 @@ export const analyzeDependencies = asyncHandler(async (req: RequestWithFile, res
 });
 export const getScanResultsById = asyncHandler(async (req: Request, res: Response) => {
     const { scanId } = req.params;
+    console.log("🔍 getScanResultsById called with scanId:", req.params.scanId);
+    console.log("🔍 Full URL:", req.originalUrl);
     const scan = await prisma.scan.findUnique({
         where: {
             id: String(scanId)

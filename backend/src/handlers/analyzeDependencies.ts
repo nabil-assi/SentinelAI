@@ -1,23 +1,28 @@
 import { Request, Response } from "express";
 import { prisma } from "../lib/prisma.js";
-import { queryNVD } from "../services/nvd.service.js";
+import { queryOSV } from "../services/osv.service.ts"; // غيرنا من nvd.service إلى osv.service
 import { analyzeWithAI } from "../services/ai.service.js";
 import { calculateSecurityScore } from "../utils/scoreCalculator.js";
-import { extractVersionsFromPackageLock } from "../utils/packageLockParser.js";
+import { extractDependencies, extractVersionsFromPackageLock } from "../utils/packageLockParser.js";
 import { fetchPackageJson, fetchPackageLockJson } from "../services/github.service.js";
 import { Severity } from "@prisma/client";
+import fs from 'fs';
 
 export const analyzeDependencies = async (req: Request, res: Response): Promise<void> => {
-    console.log("=".repeat(50));
+    console.log("=".repeat(60));
     console.log("📥 analyzeDependencies called");
-    console.log("📌 projectId:", req.params.projectId);
-    console.log("📁 req.files type:", typeof req.files);
-    console.log("📁 req.files isArray:", Array.isArray(req.files));
-    console.log("📁 req.files length:", (req.files as any)?.length);
 
     const { projectId } = req.params;
-    let packageJson: any;
-    let fileName = "package.json";
+    let packageJson: any = null;
+    let fileName = "uploaded-file";
+    let packageLockJson: any = null;
+    let isCancelled = false;
+
+    // معالجة Ctrl+C
+    process.once('SIGINT', () => {
+        console.log('\n⚠️ Scan cancelled by user');
+        isCancelled = true;
+    });
 
     try {
         if (!projectId) {
@@ -25,122 +30,212 @@ export const analyzeDependencies = async (req: Request, res: Response): Promise<
             return;
         }
 
-        // مع upload.any()، الملفات تكون array
-        const files = req.files as Express.Multer.File[];
+        const file = req.file;
 
-        // دوّر على ملف package.json (أي حقل)
-        const packageJsonFile = files?.find(f =>
-            f.fieldname === 'packageJson' ||
-            f.fieldname === 'package.json' ||
-            f.fieldname === 'json' ||
-            f.fieldname === 'file' ||
-            f.originalname === 'package.json'
-        );
+        // قراءة الملف المرفوع
+        if (file) {
+            console.log(`📁 Received file: ${file.originalname} (${file.size} bytes)`);
+            fileName = file.originalname;
 
-        // دوّر على ملف package-lock.json (أي حقل)
-        const packageLockFile = files?.find(f =>
-            f.fieldname === 'packageLock' ||
-            f.fieldname === 'package-lock.json' ||
-            f.fieldname === 'lock' ||
-            f.originalname === 'package-lock.json'
-        );
+            const isPackageLock = file.originalname.includes('package-lock') ||
+                file.originalname === 'package-lock.json';
 
-        if (packageJsonFile) {
-            packageJson = JSON.parse(packageJsonFile.buffer.toString("utf-8"));
-            fileName = packageJsonFile.originalname;
-            console.log("📦 Received package.json:", fileName);
+            if (isPackageLock) {
+                try {
+                    packageLockJson = JSON.parse(file.buffer.toString("utf-8"));
+                    console.log("🔒 Parsed as package-lock.json");
+
+                    const depsFromLock = extractDependencies(packageLockJson);
+                    console.log(`📊 Extracted ${depsFromLock.length} dependencies from lock file`);
+
+                    packageJson = {
+                        dependencies: depsFromLock.reduce((acc, dep) => {
+                            acc[dep.name] = dep.version;
+                            return acc;
+                        }, {} as Record<string, string>)
+                    };
+                } catch (e) {
+                    console.error("❌ Error parsing package-lock.json:", e);
+                    res.status(400).json({ error: "Invalid package-lock.json file" });
+                    return;
+                }
+            } else {
+                try {
+                    packageJson = JSON.parse(file.buffer.toString("utf-8"));
+                    console.log("📦 Parsed as package.json");
+                } catch (e) {
+                    console.error("❌ Error parsing package.json:", e);
+                    res.status(400).json({ error: "Invalid package.json file" });
+                    return;
+                }
+            }
         } else {
+            console.log("📁 No file uploaded, fetching from GitHub");
+
             try {
                 packageJson = await fetchPackageJson(String(projectId));
                 console.log("📦 Fetched package.json from GitHub");
+                fileName = "github-package.json";
             } catch (error) {
-                res.status(404).json({ error: "package.json not found" });
-                return;
+                console.log("⚠️ No package.json on GitHub");
+            }
+
+            try {
+                packageLockJson = await fetchPackageLockJson(String(projectId));
+                if (packageLockJson) {
+                    console.log("🔒 Fetched package-lock.json from GitHub");
+
+                    if (!packageJson) {
+                        const depsFromLock = extractDependencies(packageLockJson);
+                        packageJson = {
+                            dependencies: depsFromLock.reduce((acc, dep) => {
+                                acc[dep.name] = dep.version;
+                                return acc;
+                            }, {} as Record<string, string>)
+                        };
+                        fileName = "github-package-lock.json";
+                        console.log(`📊 Built dependencies from lock file: ${Object.keys(packageJson.dependencies).length} deps`);
+                    }
+                }
+            } catch (error) {
+                console.log("⚠️ No package-lock.json on GitHub");
             }
         }
 
-        const dependencies = {
-            ...(packageJson.dependencies || {}),
-            ...(packageJson.devDependencies || {})
-        };
+        // التأكد من وجود dependencies
+        if (!packageJson || Object.keys(packageJson.dependencies || {}).length === 0) {
+            res.status(400).json({
+                error: "No dependencies found",
+                message: "Could not extract any dependencies from the provided source"
+            });
+            return;
+        }
 
-        console.log(`📊 Found ${Object.keys(dependencies).length} dependencies`);
+        // ✅ فحص production dependencies فقط (الأهم)
+        const productionDeps = { ...(packageJson.dependencies || {}) };
+        const devDeps = { ...(packageJson.devDependencies || {}) };
 
+        console.log(`📦 Production: ${Object.keys(productionDeps).length} dependencies`);
+        console.log(`🛠️  Dev: ${Object.keys(devDeps).length} dependencies`);
+
+        // اختيار المجموعة المراد فحصها
+        const depsToScan = productionDeps; // افحص production فقط
+
+        const dependencies = depsToScan;
+        console.log(`🔍 Will scan ${Object.keys(dependencies).length} dependencies`);
+
+        // إنشاء سجل الفحص
         const scan = await prisma.scan.create({
             data: {
                 projectId: projectId as string,
                 fileName,
-                fileType: "package.json",
+                fileType: fileName.includes('lock') ? 'package-lock.json' : 'package.json',
                 status: "PROCESSING",
             }
         });
 
         console.log(`🔍 Scan created: ${scan.id}`);
 
-        // محاولة جلب النسخ الفعلية من package-lock.json
+        // استخراج النسخ الفعلية من package-lock.json
         let actualVersions: Record<string, string> = {};
+        if (packageLockJson) {
+            actualVersions = extractVersionsFromPackageLock(packageLockJson);
+            console.log(`🔒 Found ${Object.keys(actualVersions).length} actual versions`);
+        }
 
-        if (packageLockFile) {
+        // Checkpoint file للاستئناف
+        const checkpointFile = `./scan-checkpoint-${scan.id}.json`;
+        let processedDeps = new Set<string>();
+        let osvVulnerabilities: any[] = []; // غيرنا الاسم من nvdVulnerabilities
+
+        if (fs.existsSync(checkpointFile)) {
             try {
-                const packageLockJson = JSON.parse(packageLockFile.buffer.toString("utf-8"));
-                actualVersions = extractVersionsFromPackageLock(packageLockJson);
-                console.log(`🔒 Found package-lock.json with ${Object.keys(actualVersions).length} versions`);
-            } catch (error) {
-                console.log("Error parsing package-lock.json:", error);
+                const checkpoint = JSON.parse(fs.readFileSync(checkpointFile, 'utf-8'));
+                processedDeps = new Set(checkpoint.processed);
+                osvVulnerabilities = checkpoint.vulnerabilities || [];
+                console.log(`🔄 Resuming from checkpoint: ${processedDeps.size} already scanned`);
+            } catch (e) {
+                console.log("⚠️ Could not load checkpoint, starting fresh");
             }
-        } else {
+        }
+
+        // فحص dependencies باستخدام OSV (بدون limits!)
+        const depsToCheck = Object.entries(dependencies);
+        const totalDeps = depsToCheck.length;
+        const startTime = Date.now();
+
+        console.log(`🔍 Scanning ${totalDeps} dependencies with OSV...`);
+        console.log(`⏱️  Estimated time: ~${Math.ceil(totalDeps * 0.5 / 60)} minutes`); // OSV أسرع بكثير
+
+        // OSV يسمح بالـ batch requests (أسرع)
+        const BATCH_SIZE = 50; // نرسل 50 مكتبة بطلب واحد
+
+        for (let i = 0; i < depsToCheck.length; i += BATCH_SIZE) {
+            if (isCancelled) {
+                console.log('🛑 Scan cancelled, saving partial results...');
+                break;
+            }
+
+            const batch = depsToCheck.slice(i, i + BATCH_SIZE);
+            const batchPackages = batch.map(([name, versionRange]) => ({
+                name,
+                version: actualVersions[name] || (versionRange as string).replace(/[^0-9.]/g, '')
+            }));
+
+            const scanned = Math.min(i + BATCH_SIZE, totalDeps);
+            const percent = Math.round((scanned / totalDeps) * 100);
+
+            const elapsed = (Date.now() - startTime) / 1000;
+            const avgTimePerDep = elapsed / scanned;
+            const remaining = Math.ceil((totalDeps - scanned) * avgTimePerDep / 60);
+
+            console.log(`\n[${percent}%] ${scanned}/${totalDeps} - Est. remaining: ${remaining} min`);
+
             try {
-                const packageLockJson = await fetchPackageLockJson(String(projectId));
-                if (packageLockJson) {
-                    actualVersions = extractVersionsFromPackageLock(packageLockJson);
-                    console.log(`🔒 Fetched package-lock.json from GitHub with ${Object.keys(actualVersions).length} versions`);
+                // OSV يدخل batch request (أسرع من NVD بكثير)
+                const vulns = await queryOSV(batchPackages, 'npm');
+                if (vulns.length > 0) {
+                    osvVulnerabilities.push(...vulns);
+                    console.log(`  ⚠️  Found ${vulns.length} vulns in batch`);
+
+                    // عرض تفاصيل الثغرات
+                    vulns.forEach((v: any) => {
+                        console.log(`    - ${v.packageName}@${v.version}: ${v.cveId || 'No CVE'} (${v.severity})`);
+                    });
+                } else {
+                    console.log(`  ✅ Batch clean: ${batch.length} packages`);
                 }
             } catch (error) {
-                console.log("No package-lock.json found, using version ranges");
+                console.error(`  ❌ Error scanning batch:`, error);
             }
+
+            // حفظ checkpoint
+            batch.forEach(([name, versionRange]) => {
+                processedDeps.add(`${name}@${versionRange}`);
+            });
+
+            fs.writeFileSync(checkpointFile, JSON.stringify({
+                processed: Array.from(processedDeps),
+                vulnerabilities: osvVulnerabilities,
+                timestamp: new Date().toISOString()
+            }));
         }
 
-       // استعلام NVD لكل dependency
-const nvdVulnerabilities = [];
-const depsToCheck = Object.entries(dependencies);
+        console.log(`\n📋 Total vulnerabilities found: ${osvVulnerabilities.length}`);
 
-console.log(`🔍 Scanning ${depsToCheck.length} dependencies against NVD...`);
-
-for (const [name, versionRange] of depsToCheck) {
-    const actualVersion = actualVersions[name] || (versionRange as string).replace(/[^0-9.]/g, '');
-    
-    try {
-        const vulns = await queryNVD(name, actualVersion);
-        if (vulns.length > 0) {
-            nvdVulnerabilities.push(...vulns);
-            console.log(`  ⚠️  Found ${vulns.length} vulnerabilities in ${name}@${actualVersion}`);
-        } else {
-            console.log(`  ✅ ${name}@${actualVersion} is clean`);
-        }
-    } catch (error) {
-        console.error(`Error scanning ${name}:`, error);
-    }
-
-    // تأخير بين الطلبات - 1 ثانية
-    console.log(`  ⏳ Waiting 1 second before next request...`);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-}
-
-        // تحليل النتائج بالذكاء الاصطناعي
-        const aiResult = await analyzeWithAI(nvdVulnerabilities);
+        // تحليل بالذكاء الاصطناعي
+        const aiResult = await analyzeWithAI(osvVulnerabilities);
 
         // تخزين النتائج
-        if (nvdVulnerabilities.length > 0) {
-            const vulnerabilitiesData = nvdVulnerabilities.map(v => ({
+        if (osvVulnerabilities.length > 0) {
+            const vulnerabilitiesData = osvVulnerabilities.map(v => ({
                 scanId: scan.id,
-                libraryName: v.libraryName,
-                title: `${v.cveId}: ${v.summary.substring(0, 100)}`,
-                description: v.summary.substring(0, 500),
-                severity: mapCvssToPrismaSeverity(v.cvssScore),
-                recommendation: v.fixedVersion
-                    ? `Update to version ${v.fixedVersion}`
-                    : `Check for updates for ${v.libraryName}`,
-                cveId: v.cveId
+                libraryName: v.packageName,
+                title: v.title || `${v.cveId || 'Vulnerability'} in ${v.packageName}`,
+                description: v.description || v.summary || 'No description available',
+                severity: v.severity as Severity || Severity.MEDIUM,
+                recommendation: v.recommendation || `Update ${v.packageName} to version ${v.fixedVersion || 'latest'}`,
+                cveId: v.cveId || 'OSV-DB'
             }));
 
             await prisma.vulnerability.createMany({
@@ -150,31 +245,35 @@ for (const [name, versionRange] of depsToCheck) {
             console.log(`💾 Saved ${vulnerabilitiesData.length} vulnerabilities to database`);
         }
 
-        // تحديث الـ scan
+        // تحديث الفحص
+        const securityScore = calculateSecurityScore(osvVulnerabilities);
         await prisma.scan.update({
             where: { id: scan.id },
             data: {
                 status: "COMPLETED",
                 completedAt: new Date(),
-                securityScore: calculateSecurityScore(nvdVulnerabilities),
+                securityScore,
                 summary: aiResult.executiveSummary,
                 aiInsights: aiResult as any
             }
         });
 
-        console.log(`✅ Scan completed with score: ${calculateSecurityScore(nvdVulnerabilities)}`);
+        // حذف ملف checkpoint
+        if (fs.existsSync(checkpointFile)) {
+            fs.unlinkSync(checkpointFile);
+        }
 
-        // إرسال الرد
+        console.log(`✅ Scan completed with score: ${securityScore}`);
+
         res.status(200).json({
             success: true,
             scanId: scan.id,
-            vulnerabilitiesFound: nvdVulnerabilities.length,
-            score: calculateSecurityScore(nvdVulnerabilities)
+            vulnerabilitiesFound: osvVulnerabilities.length,
+            score: securityScore
         });
 
     } catch (error) {
         console.error("💥 ANALYSIS CRITICAL ERROR:", error);
-
         res.status(500).json({
             success: false,
             error: "Security Analysis Pipeline Failed"

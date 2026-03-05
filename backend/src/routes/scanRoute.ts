@@ -2,32 +2,22 @@ import { Router } from 'express';
 import multer from "multer";
 import { getScanResultsById, getLatestProjectScan, getProjectScans } from '../controllers/scanController.ts';
 import { analyzeDependencies } from "../handlers/analyzeDependencies.ts"
+import { getScanStatus, queueScan } from '../services/queue.service.ts';
 
 const router = Router();
 
-const upload = multer({ storage: multer.memoryStorage() });
 
+
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 } // 10MB
+});
 router.post(
     "/analyze/:projectId",
-    upload.any(),
-    (req, res, next) => {
-        // تأكد من وجود files قبل استخدام Object.keys
-        const files = req.files as Express.Multer.File[] | undefined;
-        
-        if (files && files.length > 0) {
-            console.log("📁 Files received:", files.map(f => ({
-                fieldname: f.fieldname,
-                originalname: f.originalname,
-                size: f.size
-            })));
-        } else {
-            console.log("📁 No files received in request");
-        }
-        
-        next();
-    },
+    upload.single('packageLock'),
     analyzeDependencies
 );
+ 
 router.get("/results/:scanId", getScanResultsById);
 router.get("/project/:projectId/latest", getLatestProjectScan);
 router.get("/project/:projectId/history", getProjectScans);

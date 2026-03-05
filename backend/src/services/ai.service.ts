@@ -19,7 +19,7 @@ export async function analyzeWithAI(
         }
 
         console.log(`🤖 Analyzing ${vulnerabilities.length} vulnerabilities with AI...`);
-        
+
         // تأكد من وجود كلمة JSON في الـ messages
         const completion = await groq.chat.completions.create({
             model: "llama-3.3-70b-versatile",
@@ -82,10 +82,10 @@ Remember: Your response must be valid JSON format.`
 
     } catch (error) {
         console.error("🤖 AI analysis error:", error);
-        
+
         // Return fallback analysis
         console.log("⚠️ Using fallback analysis due to AI error");
-        
+
         return {
             prioritizedVulnerabilities: vulnerabilities.map(v => ({
                 libraryName: v.libraryName,
@@ -93,7 +93,7 @@ Remember: Your response must be valid JSON format.`
                 severity: mapCvssToSeverity(v.cvssScore),
                 title: `${v.cveId} in ${v.libraryName}`,
                 description: v.summary.substring(0, 200),
-                recommendation: v.fixedVersion 
+                recommendation: v.fixedVersion
                     ? `Update to version ${v.fixedVersion} or later`
                     : `Check for updates for ${v.libraryName}`
             })),
