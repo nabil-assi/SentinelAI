@@ -18,7 +18,6 @@ export const analyzeDependencies = async (req: Request, res: Response): Promise<
     let packageLockJson: any = null;
     let isCancelled = false;
 
-    // معالجة Ctrl+C
     process.once('SIGINT', () => {
         console.log('\n⚠️ Scan cancelled by user');
         isCancelled = true;
@@ -70,7 +69,7 @@ export const analyzeDependencies = async (req: Request, res: Response): Promise<
                 }
             }
         } else {
-            console.log("📁 No file uploaded, fetching from GitHub");
+            console.log("📁 No file uploaded, fetching from GitHub...");
 
             try {
                 packageJson = await fetchPackageJson(String(projectId));
@@ -146,7 +145,7 @@ export const analyzeDependencies = async (req: Request, res: Response): Promise<
         // Checkpoint file للاستئناف
         const checkpointFile = `./scan-checkpoint-${scan.id}.json`;
         let processedDeps = new Set<string>();
-        let osvVulnerabilities: any[] = []; // غيرنا الاسم من nvdVulnerabilities
+        let osvVulnerabilities: any[] = []; 
 
         if (fs.existsSync(checkpointFile)) {
             try {
@@ -159,7 +158,6 @@ export const analyzeDependencies = async (req: Request, res: Response): Promise<
             }
         }
 
-        // فحص dependencies باستخدام OSV (بدون limits!)
         const depsToCheck = Object.entries(dependencies);
         const totalDeps = depsToCheck.length;
         const startTime = Date.now();

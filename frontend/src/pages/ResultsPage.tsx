@@ -41,6 +41,7 @@ export default function ResultsPage() {
         const res = await api.get(`/scan/results/${scanId}`);
         // التأكد من استخراج البيانات بشكل صحيح بناءً على هيكلة JSON الخاصة بك
         setScan(res.data.data);
+        console.log(res.data);
       } catch (err: any) {
         setError("Failed to fetch security report.");
       } finally {
@@ -159,6 +160,7 @@ export default function ResultsPage() {
             onClick={() => {
               // تصدير تقرير نصي
               const vulns = scan.vulnerabilities || [];
+              
               const score = calculateScore(vulns);
               
               let report = `SECURITY SCAN REPORT\n`;

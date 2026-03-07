@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { errorHandler } from './middlewares/globalErrorHandler.ts';
+import redis from 'redis'
 dotenv.config();
 
 import rateLimit from 'express-rate-limit';
@@ -15,11 +16,20 @@ import authRoutes from './routes/authRoute.ts';
 import projectRoutes from './routes/projectRoute.ts';
 import scanRoutes from './routes/scanRoute.ts';
 
+//pm2 start src/app.ts --interpreter ts-node -i max --name sential_ai
+//pm2 start src/app.ts --interpreter tsx -i max --name sential_ai
+//loadtest -n 1000 -c 100 http://localhost:5000/health
 
 const app = express();
 
 
+
 // Middleware
+// const client = redis.createClient({
+//   url: 'redis://localhost:6379'
+// });
+// client.on('error', err=> console.error(`Redis client error: ${err}`));
+
 app.use(cors({
   origin: ['http://localhost:5173', 'http://localhost:8080', 'http://localhost:3000'],
   credentials: true,
@@ -61,7 +71,7 @@ app.get('/health', (req: Request, res: Response) => {
 });
 
 const PORT = process.env.PORT || 5000;
-const server = app.listen(process.env.PORT || 5000, () => {
+const server = app.listen(process.env.PORT || '0.0.0.0', () => {
   console.log(`Server is running on port ${process.env.PORT || 5000}`);
 });
 

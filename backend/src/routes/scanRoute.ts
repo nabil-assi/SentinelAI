@@ -2,7 +2,7 @@ import { Router } from 'express';
 import multer from "multer";
 import { getScanResultsById, getLatestProjectScan, getProjectScans } from '../controllers/scanController.ts';
 import { analyzeDependencies } from "../handlers/analyzeDependencies.ts"
-import { getScanStatus, queueScan } from '../services/queue.service.ts';
+// import { getScanStatus, queueScan } from '../services/queue.service.ts';
 
 const router = Router();
 
