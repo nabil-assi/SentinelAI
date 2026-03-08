@@ -5,76 +5,61 @@ import dotenv from 'dotenv';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { errorHandler } from './middlewares/globalErrorHandler.ts';
-import redis from 'redis'
-dotenv.config();
 
-import rateLimit from 'express-rate-limit';
-import slowDown from 'express-slow-down';
-
-
+// استيراد الـ Routes
 import authRoutes from './routes/authRoute.ts';
 import projectRoutes from './routes/projectRoute.ts';
 import scanRoutes from './routes/scanRoute.ts';
+import dashboardRoute from './routes/dashboardRoute.ts';
 
-//pm2 start src/app.ts --interpreter ts-node -i max --name sential_ai
-//pm2 start src/app.ts --interpreter tsx -i max --name sential_ai
-//loadtest -n 1000 -c 100 http://localhost:5000/health
+dotenv.config();
 
 const app = express();
 
-
-
-// Middleware
-// const client = redis.createClient({
-//   url: 'redis://localhost:6379'
-// });
-// client.on('error', err=> console.error(`Redis client error: ${err}`));
-
+// --- 1. Middlewares الأساسية (بالترتيب الصحيح) ---
+app.use(helmet()); // للحماية
 app.use(cors({
   origin: ['http://localhost:5173', 'http://localhost:8080', 'http://localhost:3000'],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
 }));
-app.use(helmet());
-app.use(express.json());
+
+app.use(express.json()); // ضروري لقراءة الـ Body
 app.use(express.urlencoded({ extended: true }));
-app.use(errorHandler);
-app.use(cookieParser());
+app.use(cookieParser()); // لقراءة الـ Cookies
 
-
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 دقيقة
-  max: 5, // 5 طلبات فقط
-  message: 'Too many scans, please try again later'
+// --- 2. روابط الـ Health Check (دائماً في البداية لتجنب التعليق) ---
+app.get('/health', (req: Request, res: Response) => {
+  res.status(200).send('Server is healthy and running perfectly');
 });
 
-// app.use('/api/scan', limiter); // هذا يمنع الطلب فوراً
-// Slow down المتطفلين
-const speedLimiter = slowDown({
-  windowMs: 15 * 60 * 1000, // 15 دقيقة
-  delayAfter: 3,            // السماح بـ 3 طلبات بدون تأخير
-  delayMs: () => 500,        // 500ms تأخير إضافي لكل طلب بعد الـ 3 طلبات (الصيغة الجديدة)
-});
-// Routes
+// لضمان رؤية الـ DATABASE_URL في الـ Logs عند التشغيل
+console.log("Database URL is defined:", !!process.env.DATABASE_URL);
 
-console.log("Database URL is:", process.env.DATABASE_URL);
-// app.use('/api/scan', limiter, speedLimiter);
-// app.use('/api/scan', speedLimiter);
+// --- 3. تعريف الـ Routes ---
+// ملاحظة: الـ Dashboard والـ Auth والـ Projects كلها هون
+app.use('/api/dashboard', dashboardRoute);
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/scan', scanRoutes);
 
-
-app.get('/health', (req: Request, res: Response) => {
-  res.send('Server is healthy and runnig perfectly');
+// --- 4. معالجة الروابط غير الموجودة (404) ---
+app.use((req: Request, res: Response) => {
+  res.status(404).json({ success: false, message: "Route not found" });
 });
 
+// --- 5. الـ Global Error Handler (المكان الوحيد الصح: آاااخر الملف) ---
+// لازم يكون بعد كل الـ Routes عشان يمسك أي Error بوقع فوقه
+app.use(errorHandler);
+
+// --- 6. إعدادات السيرفر والـ Timeout ---
 const PORT = process.env.PORT || 5000;
-const server = app.listen(process.env.PORT || '0.0.0.0', () => {
-  console.log(`Server is running on port ${process.env.PORT || 5000}`);
+const server = app.listen(5000, () => {
+  console.log(`🚀 Server is running on port ${PORT}`);
 });
 
-// اجعل الوقت 5 دقائق (300 ثانية) لتسمح للـ Loop والـ AI بالعمل
-server.timeout = 300000;
+// زيادة الـ Timeout للعمليات الطويلة (مثل الـ AI Scans)
+server.timeout = 300000; // 5 دقائق
+
 export default app;
