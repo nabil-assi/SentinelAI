@@ -74,3 +74,28 @@ export const allUsers = asyncHandler(async (req: Request, res: Response) => {
   res.status(200).json(users);
 
 });
+
+
+export const userData = asyncHandler(async (req: Request, res: Response)=>{
+    const userId = (req as any).user?.id;
+
+    if(!userId){
+        return res.status(401).json({success: false, message:"User not found!"});
+    }
+    const data = await prisma.user.findFirst({
+        where: {
+            id: String(userId),
+        
+        },
+        select:{
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            createdAt: true,
+            provider: true,
+
+        }
+    })
+    res.status(200).json({success: true, data});
+});

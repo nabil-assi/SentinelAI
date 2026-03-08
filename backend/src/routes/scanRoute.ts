@@ -3,6 +3,7 @@ import multer from "multer";
 import { getScanResultsById, getLatestProjectScan, getProjectScans } from '../controllers/scanController.ts';
 import { analyzeDependencies } from "../handlers/analyzeDependencies.ts"
 // import { getScanStatus, queueScan } from '../services/queue.service.ts';
+import { protect } from '../middlewares/authMiddleware.ts';
 
 const router = Router();
 
@@ -14,10 +15,11 @@ const upload = multer({
 });
 router.post(
     "/analyze/:projectId",
+    protect,
     upload.single('packageLock'),
     analyzeDependencies
 );
- 
+
 router.get("/results/:scanId", getScanResultsById);
 router.get("/project/:projectId/latest", getLatestProjectScan);
 router.get("/project/:projectId/history", getProjectScans);

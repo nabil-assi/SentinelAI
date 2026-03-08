@@ -6,6 +6,6 @@ const router = Router();
 
 
 router.get('/', protect, getDashboard);
-
+// router.get('/settings', protect, getSettingsData)
 
 export default router;

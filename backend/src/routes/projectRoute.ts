@@ -8,6 +8,6 @@ const router = Router();
 router.post('/', protect, createProject);
 router.get('/', protect, getAllProjects);
 
-router.get('/:id', getProjectById);
+router.get('/:id', protect, getProjectById);
 
 export default router;
