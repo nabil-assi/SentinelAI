@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import axios from 'axios';
-import { prisma } from '../lib/prisma.ts';
-import asyncHandler from '../utils/asyncHandler.ts';
+import { prisma } from '../lib/prisma';
+import asyncHandler from '../utils/asyncHandler';
 import { Groq } from "groq-sdk";
 import { ScanStatus } from '@prisma/client';
 import "multer"

@@ -1,4 +1,4 @@
-import { DependencyInfo } from "../types/index.ts";  
+import { DependencyInfo } from "../types/index";  
 
 export function extractVersionsFromPackageLock(packageLockJson: any): Record<string, string> {
     const versions: Record<string, string> = {};

@@ -1,8 +1,8 @@
 import { Router, Request, Response } from 'express';
-import { register, allUsers, login, googleAuthCallback, userData, logout } from '../controllers/authController.ts';
+import { register, allUsers, login, googleAuthCallback, userData, logout } from '../controllers/authController';
 import passport from 'passport';
-import { protect } from '../middlewares/authMiddleware.ts';
-import { prisma } from '../lib/prisma.ts';
+import { AuthRequest, protect } from '../middlewares/authMiddleware';
+import { prisma } from '../lib/prisma';
 import jwt from 'jsonwebtoken';
 
 const router = Router();
@@ -15,14 +15,10 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 router.post('/register', register);
 router.get('/users', allUsers);
 router.post('/login', login);
-router.post('/logout', protect, logout);
+router.post('/logout', protect as any, logout);
 
-router.get('/me', protect, userData);
-
-// router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
-
+router.get('/me', protect as any, userData);
  
-
 
 router.post('/google', async (req: Request, res: Response) => {
     const {token} = req.body;

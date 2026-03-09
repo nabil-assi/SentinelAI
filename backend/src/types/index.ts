@@ -1,5 +1,21 @@
 import type { Request } from "express";
 import "multer";
+
+export interface AIAnalysisResult {
+    prioritizedVulnerabilities: {
+        libraryName: string;
+        cveId: string;
+        severity: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
+        title: string;
+        description: string;
+        recommendation: string;
+    }[];
+    executiveSummary: string;
+    technicalSummary: string;
+    remediationPlan: string;
+}
+
+
 export interface RequestWithFile extends Request {
     file?: Express.Multer.File;
     files?: {

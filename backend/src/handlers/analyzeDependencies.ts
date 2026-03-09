@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
 import { prisma } from "../lib/prisma.js";
-import { queryOSV } from "../services/osv.service.ts"; // غيرنا من nvd.service إلى osv.service
-import { analyzeWithAI } from "../services/ai.service.js";
-import { calculateSecurityScore } from "../utils/scoreCalculator.js";
-import { extractDependencies, extractVersionsFromPackageLock } from "../utils/packageLockParser.js";
-import { fetchPackageJson, fetchPackageLockJson } from "../services/github.service.js";
+import { queryOSV } from "../services/osv.service"; // غيرنا من nvd.service إلى osv.service
+import { analyzeWithAI } from "../services/ai.service";
+import { calculateSecurityScore } from "../utils/scoreCalculator";
+import { extractDependencies, extractVersionsFromPackageLock } from "../utils/packageLockParser";
+import { fetchPackageJson, fetchPackageLockJson } from "../services/github.service";
 import { Severity } from "@prisma/client";
 import fs from 'fs';
 

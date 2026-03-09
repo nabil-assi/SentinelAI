@@ -2,8 +2,8 @@ import express from 'express';
 import type { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { prisma } from '../lib/prisma.ts';
-import asyncHandler from '../utils/asyncHandler.ts';
+import { prisma } from '../lib/prisma';
+import asyncHandler from '../utils/asyncHandler';
 
 export const createProject = asyncHandler(async (req: Request, res: Response) => {
     const { name, description, github } = req.body;

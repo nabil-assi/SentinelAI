@@ -1,8 +1,9 @@
 import type { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { prisma } from '../lib/prisma.ts';
-import asyncHandler from '../utils/asyncHandler.ts';
+import { prisma } from '../lib/prisma';
+import asyncHandler from '../utils/asyncHandler';
+import { AuthRequest, protect } from '../middlewares/authMiddleware';
 
 export const register = asyncHandler(async (req: Request, res: Response) => {
   const { email, password, name } = req.body;
@@ -68,7 +69,7 @@ export const googleAuthCallback = asyncHandler(async (req: Request, res: Respons
   // توجيه المستخدم للفرونت إيند
   res.redirect('http://localhost:3000/dashboard?login=success');
 });
-export const allUsers = asyncHandler(async (req: Request, res: Response) => {
+export const allUsers = asyncHandler(async (req: AuthRequest, res: Response) => {
 
   const users = await prisma.user.findMany();
   res.status(200).json(users);
@@ -76,7 +77,7 @@ export const allUsers = asyncHandler(async (req: Request, res: Response) => {
 });
 
 
-export const userData = asyncHandler(async (req: Request, res: Response) => {
+export const userData = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = (req as any).user?.id;
 
   if (!userId) {
@@ -100,7 +101,7 @@ export const userData = asyncHandler(async (req: Request, res: Response) => {
   res.status(200).json({ success: true, data });
 });
 
-export const logout = asyncHandler(async (req: Request, res: Response) => {
+export const logout = asyncHandler(async (req: AuthRequest , res: Response) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {

@@ -4,13 +4,13 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
-import { errorHandler } from './middlewares/globalErrorHandler.ts';
+import { errorHandler } from './middlewares/globalErrorHandler';
 
 // استيراد الـ Routes
-import authRoutes from './routes/authRoute.ts';
-import projectRoutes from './routes/projectRoute.ts';
-import scanRoutes from './routes/scanRoute.ts';
-import dashboardRoute from './routes/dashboardRoute.ts';
+import authRoutes from './routes/authRoute';
+import projectRoutes from './routes/projectRoute';
+import scanRoutes from './routes/scanRoute';
+import dashboardRoute from './routes/dashboardRoute';
 
 dotenv.config();
 

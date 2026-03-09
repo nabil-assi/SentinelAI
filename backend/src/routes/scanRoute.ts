@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import multer from "multer";
-import { getScanResultsById, getLatestProjectScan, getProjectScans } from '../controllers/scanController.ts';
-import { analyzeDependencies } from "../handlers/analyzeDependencies.ts"
+import { getScanResultsById, getLatestProjectScan, getProjectScans } from '../controllers/scanController';
+import { analyzeDependencies } from "../handlers/analyzeDependencies"
 // import { getScanStatus, queueScan } from '../services/queue.service.ts';
-import { protect } from '../middlewares/authMiddleware.ts';
+import { protect } from '../middlewares/authMiddleware';
 
 const router = Router();
 
@@ -15,7 +15,7 @@ const upload = multer({
 });
 router.post(
     "/analyze/:projectId",
-    protect,
+    protect as any,
     upload.single('packageLock'),
     analyzeDependencies
 );

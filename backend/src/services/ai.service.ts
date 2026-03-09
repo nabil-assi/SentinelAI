@@ -1,5 +1,5 @@
 import Groq from "groq-sdk";
-import type { NVDVulnerability, AIAnalysisResult } from "../types/index.ts";
+import { NVDVulnerability, AIAnalysisResult } from "../types/index";
 
 const groq = new Groq({
     apiKey: process.env.GROQ_API_KEY,

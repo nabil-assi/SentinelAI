@@ -1,11 +1,11 @@
 import express, { Router } from 'express';
-import { protect } from '../middlewares/authMiddleware.ts';
+import { protect } from '../middlewares/authMiddleware';
 
-import { getDashboard } from '../controllers/dashboardController.ts';
+import { getDashboard } from '../controllers/dashboardController';
 const router = Router();
 
 
-router.get('/', protect, getDashboard);
+router.get('/', protect as any, getDashboard);
 // router.get('/settings', protect, getSettingsData)
 
 export default router;

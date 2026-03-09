@@ -1,9 +1,9 @@
 // services/security.service.ts
-import { prisma } from '../lib/prisma.js';
-import { queryNVD } from './nvd.service.js';
-import { analyzeWithAI } from './ai.service.js';
-import { extractDependencies, extractVersionsFromPackageLock } from '../utils/packageLockParser.js';
-import { calculateSecurityScore } from '../utils/scoreCalculator.js';
+import { prisma } from '../lib/prisma';
+import { queryOSV } from './osv.service';
+import { analyzeWithAI } from './ai.service';
+import { extractDependencies, extractVersionsFromPackageLock } from '../utils/packageLockParser';
+import { calculateSecurityScore } from '../utils/scoreCalculator';
 import { Severity } from '@prisma/client';
 
 export async function runSecurityScan(projectId: string, file?: Express.Multer.File) {
@@ -58,7 +58,7 @@ export async function runSecurityScan(projectId: string, file?: Express.Multer.F
 
         for (const [name, versionRange] of depsToCheck) {
             const actualVersion = actualVersions[name] || (versionRange as string).replace(/[^0-9.]/g, '');
-            const vulns = await queryNVD(name, actualVersion);
+            const vulns = await queryOSV([{ name, version: actualVersion }]);
             if (vulns.length > 0) {
                 nvdVulnerabilities.push(...vulns);
             }

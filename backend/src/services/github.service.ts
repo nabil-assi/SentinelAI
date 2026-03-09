@@ -1,5 +1,5 @@
 import axios from "axios";
-import { prisma } from "../lib/prisma.ts";  
+import { prisma } from "../lib/prisma";  
 
 export async function fetchPackageJson(projectId: string): Promise<any> {
     const project = await prisma.project.findUnique({
