@@ -6,6 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useState } from "react";
 import api from "@/api/axios";
+import { useGoogleLogin } from "@react-oauth/google";
+
+// ✅ تأكد من وجود المتغير في .env
+const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -13,6 +17,35 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  // ✅ الربط الفعلي باستخدام useGoogleLogin
+  const loginWithGoogle = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        setLoading(true);
+        console.log("Google Token Response:", tokenResponse);
+        
+        // ✅ هنا الفرق الأهم: نرسل الـ access_token مش credential
+        const res = await api.post("/auth/google", {
+          token: tokenResponse.access_token,  // ✅ هذا هو المفتاح
+        });
+
+        localStorage.setItem("token", res.data.token);
+        navigate("/dashboard");
+      } catch (error: any) {
+        console.error("Google Login failed:", error);
+        setError(error.response?.data?.message || "Google authentication failed");
+      } finally {
+        setLoading(false);
+      }
+    },
+    onError: (error) => {
+      console.error("Google Login Error:", error);
+      setError("Google Login failed. Please check your connection.");
+    },
+    // ✅ تأكد من الـ scope المطلوب
+    scope: 'email profile',
+  });
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,7 +111,6 @@ export default function Login() {
           </p>
         </div>
 
-        {/* عرض رسالة الخطأ إذا وجدت */}
         {error && (
           <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md mb-4">
             {error}
@@ -86,9 +118,13 @@ export default function Login() {
         )}
 
         <div className="space-y-4">
+          {/* ✅ زر جوجل - معدل */}
           <Button
+            type="button"
+            onClick={() => loginWithGoogle()}
             variant="outline"
             className="w-full h-11 border-border hover:bg-accent"
+            disabled={loading}
           >
             <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
               <path
@@ -108,7 +144,7 @@ export default function Login() {
                 fill="#EA4335"
               />
             </svg>
-            Continue with Google
+            {loading ? "Processing..." : "Continue with Google"}
           </Button>
 
           <div className="flex items-center gap-3">

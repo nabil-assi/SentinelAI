@@ -1,5 +1,6 @@
 import { NavLink } from "@/components/NavLink";
-import { useLocation, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+
 import {
   LayoutDashboard,
   FolderPlus,
@@ -24,8 +25,11 @@ import {
 } from "@/components/ui/sidebar";
 import { useEffect, useState } from "react";
 import api from "@/api/axios";
+import { useToast } from "@/hooks/use-toast";
 
 export function AppSidebar() {
+    const navigate = useNavigate(); // ✅ أضف هذا
+  const { toast } = useToast(); // ✅ أضف هذا
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
@@ -51,17 +55,17 @@ export function AppSidebar() {
   useEffect(() => {
     const fetchLatestScan = async () => {
       const projectToUse = projectId || currentProjectId;
-      
+
       if (!projectToUse) {
         setLatestScanId(null);
         return;
       }
-      
+
       try {
         console.log("🔍 Fetching latest scan for project:", projectToUse);
         const res = await api.get(`/scan/project/${projectToUse}/latest`);
         console.log("📊 Latest scan response:", res.data);
-        
+
         if (res.data?.id) {
           setLatestScanId(res.data.id);
         } else {
@@ -85,16 +89,57 @@ export function AppSidebar() {
   // تحديد projectId المستخدم
   const activeProjectId = projectId || currentProjectId;
 
+
+  // دالة handleLogout في صفحة Settings أو في Layout الرئيسي
+const handleLogout = async () => {
+  try {
+    // ✅ مناداة API logout
+    await api.post('/auth/logout');
+    
+    // ✅ مسح التوكن من التخزين المحلي
+    localStorage.removeItem('token');
+    sessionStorage.removeItem('token');
+    
+    // ✅ توجيه المستخدم لصفحة login
+    navigate('/login');
+    
+    // ✅ إظهار رسالة نجاح (اختياري)
+    toast({
+      title: "Logged out",
+      description: "You have been successfully logged out",
+    });
+    
+  } catch (error) {
+    console.error("Logout error:", error);
+    // حتى لو فشل الـ API، نمسح التوكن محلياً
+    localStorage.removeItem('token');
+    sessionStorage.removeItem('token');
+    navigate('/login');
+  }
+};
+
+
+
   // مصفوفة روابط التحليل (تظهر فقط إذا كان فيه مشروع نشط)
-  const analysisNav = activeProjectId ? [
-    { title: "Run New Scan", url: `/scan/${activeProjectId}`, icon: Scan },
-    { title: "Scan History", url: `/history/${activeProjectId}`, icon: History },
-    ...(latestScanId ? [{ 
-      title: "Latest Report", 
-      url: `/results/${latestScanId}`, 
-      icon: FileText 
-    }] : []),
-  ] : [];
+  const analysisNav = activeProjectId
+    ? [
+        { title: "Run New Scan", url: `/scan/${activeProjectId}`, icon: Scan },
+        {
+          title: "Scan History",
+          url: `/history/${activeProjectId}`,
+          icon: History,
+        },
+        ...(latestScanId
+          ? [
+              {
+                title: "Latest Report",
+                url: `/results/${latestScanId}`,
+                icon: FileText,
+              },
+            ]
+          : []),
+      ]
+    : [];
 
   // التحقق إذا كان الرابط نشط
   const isActive = (url: string) => {
@@ -102,8 +147,14 @@ export function AppSidebar() {
       return location.pathname === "/dashboard";
     }
     // للروابط اللي فيها parameters
-    if (url.includes("/scan/") || url.includes("/history/") || url.includes("/results/")) {
-      return location.pathname.startsWith(url.split('/').slice(0, -1).join('/'));
+    if (
+      url.includes("/scan/") ||
+      url.includes("/history/") ||
+      url.includes("/results/")
+    ) {
+      return location.pathname.startsWith(
+        url.split("/").slice(0, -1).join("/"),
+      );
     }
     return location.pathname === url;
   };
@@ -111,7 +162,10 @@ export function AppSidebar() {
   // لو مفيش مشروع نشط، ما نظهرش قسم التحليل
   if (!activeProjectId) {
     return (
-      <Sidebar collapsible="icon" className="border-r border-border bg-card/50 backdrop-blur-md">
+      <Sidebar
+        collapsible="icon"
+        className="border-r border-border bg-card/50 backdrop-blur-md"
+      >
         {/* Logo Section */}
         <div className="flex items-center gap-3 px-5 py-6 border-b border-border/50 shadow-sm">
           <div className="p-1.5 bg-primary rounded-lg shadow-lg shadow-primary/20">
@@ -119,7 +173,10 @@ export function AppSidebar() {
           </div>
           {!collapsed && (
             <span className="text-lg font-black tracking-tighter text-foreground uppercase italic">
-              Sentinel<span className="text-primary text-xs ml-0.5 not-italic font-bold">AI</span>
+              Sentinel
+              <span className="text-primary text-xs ml-0.5 not-italic font-bold">
+                AI
+              </span>
             </span>
           )}
         </div>
@@ -144,8 +201,8 @@ export function AppSidebar() {
                         to={item.url}
                         end={item.url === "/dashboard"}
                         className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
-                          active 
-                            ? "bg-primary/10 text-primary border-r-2 border-primary" 
+                          active
+                            ? "bg-primary/10 text-primary border-r-2 border-primary"
                             : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
                         }`}
                       >
@@ -165,8 +222,8 @@ export function AppSidebar() {
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Settings">
-                <NavLink 
-                  to="/settings" 
+                <NavLink
+                  to="/settings"
                   className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all ${
                     location.pathname === "/settings"
                       ? "bg-primary/10 text-primary"
@@ -180,8 +237,8 @@ export function AppSidebar() {
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Sign Out">
-                <NavLink 
-                  to="/login" 
+                <NavLink
+                  to="/login"
                   className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-semibold text-destructive hover:bg-destructive/5 transition-all"
                 >
                   <LogOut className="h-4 w-4 shrink-0" />
@@ -196,7 +253,10 @@ export function AppSidebar() {
   }
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-border bg-card/50 backdrop-blur-md">
+    <Sidebar
+      collapsible="icon"
+      className="border-r border-border bg-card/50 backdrop-blur-md"
+    >
       {/* Logo Section */}
       <div className="flex items-center gap-3 px-5 py-6 border-b border-border/50 shadow-sm">
         <div className="p-1.5 bg-primary rounded-lg shadow-lg shadow-primary/20">
@@ -204,7 +264,10 @@ export function AppSidebar() {
         </div>
         {!collapsed && (
           <span className="text-lg font-black tracking-tighter text-foreground uppercase italic">
-            Sentinel<span className="text-primary text-xs ml-0.5 not-italic font-bold">AI</span>
+            Sentinel
+            <span className="text-primary text-xs ml-0.5 not-italic font-bold">
+              AI
+            </span>
           </span>
         )}
       </div>
@@ -229,8 +292,8 @@ export function AppSidebar() {
                       to={item.url}
                       end={item.url === "/dashboard"}
                       className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
-                        active 
-                          ? "bg-primary/10 text-primary border-r-2 border-primary" 
+                        active
+                          ? "bg-primary/10 text-primary border-r-2 border-primary"
                           : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
                       }`}
                     >
@@ -262,8 +325,8 @@ export function AppSidebar() {
                     <NavLink
                       to={item.url}
                       className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
-                        active 
-                          ? "bg-primary/10 text-primary border-r-2 border-primary shadow-sm" 
+                        active
+                          ? "bg-primary/10 text-primary border-r-2 border-primary shadow-sm"
                           : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
                       }`}
                     >
@@ -292,8 +355,8 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Settings">
-              <NavLink 
-                to="/settings" 
+              <NavLink
+                to="/settings"
                 className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all ${
                   location.pathname === "/settings"
                     ? "bg-primary/10 text-primary"
@@ -307,17 +370,17 @@ export function AppSidebar() {
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Sign Out">
-              <NavLink 
-                to="/login" 
-                className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-semibold text-destructive hover:bg-destructive/5 transition-all"
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-semibold text-destructive hover:bg-destructive/5 transition-all w-full"
               >
                 <LogOut className="h-4 w-4 shrink-0" />
                 {!collapsed && <span>Sign Out</span>}
-              </NavLink>
+              </button>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
   );
-} 
+}
