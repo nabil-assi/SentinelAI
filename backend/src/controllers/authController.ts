@@ -76,26 +76,54 @@ export const allUsers = asyncHandler(async (req: Request, res: Response) => {
 });
 
 
-export const userData = asyncHandler(async (req: Request, res: Response)=>{
-    const userId = (req as any).user?.id;
+export const userData = asyncHandler(async (req: Request, res: Response) => {
+  const userId = (req as any).user?.id;
 
-    if(!userId){
-        return res.status(401).json({success: false, message:"User not found!"});
+  if (!userId) {
+    return res.status(401).json({ success: false, message: "User not found!" });
+  }
+  const data = await prisma.user.findFirst({
+    where: {
+      id: String(userId),
+
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      createdAt: true,
+      provider: true,
+
     }
-    const data = await prisma.user.findFirst({
-        where: {
-            id: String(userId),
-        
-        },
-        select:{
-            id: true,
-            name: true,
-            email: true,
-            role: true,
-            createdAt: true,
-            provider: true,
+  })
+  res.status(200).json({ success: true, data });
+});
 
-        }
-    })
-    res.status(200).json({success: true, data});
+export const logout = asyncHandler(async (req: Request, res: Response) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(200).json({
+      message: "Logged out successfully",
+      code: "ALREADY_LOGGED_OUT"
+    });
+  }
+
+  const token = authHeader.split(' ')[1];
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "default_secret_key") as { id: string };
+
+
+    console.log(`✅ User ${decoded.id} logged out successfully`);
+
+  } catch (error) {
+    console.log("Logout with invalid/expired token");
+  }
+
+  return res.status(200).json({
+    message: "Logged out successfully",
+    code: "LOGOUT_SUCCESS"
+  });
 });
