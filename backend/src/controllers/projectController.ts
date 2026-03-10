@@ -8,7 +8,6 @@ import asyncHandler from '../utils/asyncHandler';
 export const createProject = asyncHandler(async (req: Request, res: Response) => {
     const { name, description, github } = req.body;
     const userId = (req as any).user?.id;
-    // console.log(`UserID::::::::::::: ${userId}`);
     if (!name || !description || !github) {
         return res.status(400).json({ message: 'Please provide all required fields', success: false });
     }

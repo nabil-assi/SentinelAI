@@ -25,7 +25,6 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
 export const login = asyncHandler(async (req: Request, res: Response) => {
   const { email, password } = req.body;
   const user = await prisma.user.findUnique({ where: { email } });
-  console.log("Body received:", req.body);
   if (!user) return res.status(400).json({ message: "User not found", success: false });
 
   const isPasswordValid = await bcrypt.compare(password, String(user.password));
@@ -44,7 +43,6 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const googleAuthCallback = asyncHandler(async (req: Request, res: Response) => {
-  //req.user بيوصلنا من Passport بعد نجاح تسجيل الدخuserول
   const user = req.user as any;
 
   if (!user) {
@@ -58,7 +56,6 @@ export const googleAuthCallback = asyncHandler(async (req: Request, res: Respons
     { expiresIn: '24h' }
   );
 
-  // إرسال التوكن في Cookie أمانها عالي
   res.cookie('token', token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
