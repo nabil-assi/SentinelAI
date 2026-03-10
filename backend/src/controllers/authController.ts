@@ -73,7 +73,6 @@ export const getAllUser = asyncHandler(async (req: AuthRequest, res: Response) =
 
 });
 
-
 export const getUser = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userEmail = req.params.email;
 
@@ -83,6 +82,29 @@ export const getUser = asyncHandler(async (req: AuthRequest, res: Response) => {
   const data = await prisma.user.findFirst({
     where: {
       email: String(userEmail),
+
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      createdAt: true,
+      provider: true,
+
+    }
+  })
+  res.status(200).json({ success: true, data });
+});
+export const userData = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = (req as any).user?.id;
+
+  if (!userId) {
+    return res.status(401).json({ success: false, message: "User not found!" });
+  }
+  const data = await prisma.user.findFirst({
+    where: {
+      id: String(userId),
 
     },
     select: {

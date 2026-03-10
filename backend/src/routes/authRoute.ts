@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { register, login, googleAuthCallback, logout, getAllUser,getUser } from '../controllers/authController';
+import { register, login, googleAuthCallback, userData, logout, getAllUser,getUser } from '../controllers/authController';
 import passport from 'passport';
 import { AuthRequest, protect } from '../middlewares/authMiddleware';
 import { prisma } from '../lib/prisma';
