@@ -27,7 +27,7 @@ export default function HistoryPage() {
       try {
         setLoading(true);
         setError(""); 
-        const res = await api.get(`/scan/project/${projectId}/history`);
+        const res = await api.get(`/api/scan/project/${projectId}/history`);
         const rawData = res.data?.scans || res.data?.data || res.data;
         setScans(Array.isArray(rawData) ? rawData : []);
       } catch (err: any) {

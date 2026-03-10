@@ -42,7 +42,7 @@ export default function Dashboard() {
     try {
       setLoading(true);
       setError(null);
-      const response = await api.get<DashboardData>("/dashboard");
+      const response = await api.get<DashboardData>("/api/dashboard");
       if (response.data.success) {
         setData(response.data);
       }

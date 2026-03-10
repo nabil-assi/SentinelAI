@@ -25,7 +25,7 @@ export default function NewProject() {
     if (activeTab === "select") {
       const fetchProjects = async () => {
         try {
-          const res = await api.get("projects/");
+          const res = await api.get("api/projects/");
           setProjects(res.data.projects);
         } catch (err) {
           setError("Failed to load existing projects.");
@@ -51,7 +51,7 @@ export default function NewProject() {
 
     try {
       setLoaging(true);
-      const response = await api.post("projects/", {
+      const response = await api.post("api/projects/", {
         name: name,
         description: description,
         github: githubUrl,

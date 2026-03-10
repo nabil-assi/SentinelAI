@@ -12,35 +12,34 @@ export async function analyzeWithAI(
         if (vulnerabilities.length === 0) {
             return {
                 prioritizedVulnerabilities: [],
-                executiveSummary: "No vulnerabilities detected in your dependencies.",
-                technicalSummary: "All dependencies are up to date with no known CVEs.",
-                remediationPlan: "Continue regular updates and monitoring."
+                executiveSummary: "Security posture is excellent. No known CVEs detected.",
+                technicalSummary: "Zero-day monitoring active. All core dependencies are clean.",
+                remediationPlan: "Maintain current patch management lifecycle."
             };
         }
 
-        console.log(`🤖 Analyzing ${vulnerabilities.length} vulnerabilities with AI...`);
+        console.log(`🛡️  Senior Researcher analyzing ${vulnerabilities.length} threats...`);
 
-        // تأكد من وجود كلمة JSON في الـ messages
         const completion = await groq.chat.completions.create({
             model: "llama-3.3-70b-versatile",
-            temperature: 0.2,
+            temperature: 0.1, // تقليل العشوائية لضمان دقة التحليل التقني
             response_format: { type: "json_object" },
             messages: [
                 {
                     role: "system",
-                    content: `You are a Senior Cyber Security Researcher. 
-                    You will be given REAL vulnerabilities from NVD database.
+                    content: `"You are a destructive security auditor. Your goal is to reduce the attack surface.
+                     If you see a library that is obsolete or built-in to Node.js/Express, 
+                     you MUST explicitly tell the user to DELETE it and what code to use instead. 
+                     Stop being polite and stop just saying 'update".
+
+
+                    CRITICAL RULES:
+                    1. BEYOND UPDATING: Do not just say "Update library". 
+                    2. LEGACY DETECTION: If a library is obsolete (e.g., body-parser, request, moment.js), recommend REPLACING it with native Node.js APIs or modern alternatives.
+                    3. ATTACK VECTOR: Briefly explain HOW an attacker could exploit this in a real-world Node.js environment.
+                    4. ALTERNATIVES: Suggest a specific alternative library if the current one is notorious for vulnerabilities.
                     
-                    You MUST return a VALID JSON object with the following structure.
-                    
-                    RULES:
-                    1. Prioritize CRITICAL and HIGH severity first
-                    2. Write clear recommendations for developers
-                    3. Explain business impact in simple terms
-                    4. DO NOT add new CVEs, only analyze the ones provided
-                    5. Be specific about fixed versions when available
-                    
-                    The JSON structure must be exactly:
+                    The JSON structure MUST be exactly:
                     {
                         "prioritizedVulnerabilities": [
                             {
@@ -48,22 +47,21 @@ export async function analyzeWithAI(
                                 "cveId": "string",
                                 "severity": "CRITICAL | HIGH | MEDIUM | LOW",
                                 "title": "string",
-                                "description": "string",
-                                "recommendation": "string"
+                                "description": "Explain the exploit mechanism (e.g., Prototype Pollution, RCE)",
+                                "recommendation": "Step-by-step fix or code change",
+                                "alternativeLibrary": "string | null" // e.g., "Use express.json() instead of body-parser"
                             }
                         ],
-                        "executiveSummary": "string",
-                        "technicalSummary": "string",
-                        "remediationPlan": "string"
+                        "executiveSummary": "High-level risk assessment for stakeholders",
+                        "technicalSummary": "Deep dive into the attack surface and patterns found",
+                        "remediationPlan": "Strategic roadmap to clean the codebase"
                     }`
                 },
                 {
                     role: "user",
-                    content: `Here is the JSON data containing vulnerabilities found in our Node.js API dependencies. Please analyze them and return a JSON response:
+                    content: `Analyze these vulnerabilities found in our Node.js stack. If you see libraries like 'body-parser', 'qs', or 'lodash', look for native or lighter alternatives:
 
-${JSON.stringify(vulnerabilities, null, 2)}
-
-Remember: Your response must be valid JSON format.`
+                    ${JSON.stringify(vulnerabilities, null, 2)}`
                 }
             ]
         });
@@ -71,35 +69,24 @@ Remember: Your response must be valid JSON format.`
         const content = completion.choices[0]?.message?.content;
         if (!content) throw new Error("AI returned empty response");
 
-        // محاولة parse الـ JSON
-        try {
-            const parsed = JSON.parse(content);
-            return parsed;
-        } catch (parseError) {
-            console.error("Failed to parse AI response as JSON:", content.substring(0, 200));
-            throw new Error("AI returned invalid JSON");
-        }
+        return JSON.parse(content);
 
     } catch (error) {
-        console.error("🤖 AI analysis error:", error);
-
-        // Return fallback analysis
-        console.log("⚠️ Using fallback analysis due to AI error");
-
+        console.error("🚨 Senior Researcher Analysis Failed:", error);
+        // Fallback remains as backup
         return {
             prioritizedVulnerabilities: vulnerabilities.map(v => ({
                 libraryName: v.libraryName,
                 cveId: v.cveId,
                 severity: mapCvssToSeverity(v.cvssScore),
-                title: `${v.cveId} in ${v.libraryName}`,
-                description: v.summary.substring(0, 200),
-                recommendation: v.fixedVersion
-                    ? `Update to version ${v.fixedVersion} or later`
-                    : `Check for updates for ${v.libraryName}`
+                title: `Emergency: ${v.libraryName} threat`,
+                description: "AI analysis failed, but NVD data indicates immediate attention needed.",
+                recommendation: `Manual audit required for version ${v.fixedVersion || 'latest'}`,
+                alternativeLibrary: null
             })),
-            executiveSummary: `Found ${vulnerabilities.length} vulnerabilities in dependencies.`,
-            technicalSummary: `Vulnerabilities found: ${vulnerabilities.length}`,
-            remediationPlan: "Update affected packages to latest versions."
+            executiveSummary: "Automated analysis failed. Manual intervention required.",
+            technicalSummary: "System encountered an error during deep-packet analysis of vulnerabilities.",
+            remediationPlan: "Verify NVD sources manually and apply emergency patches."
         };
     }
 }

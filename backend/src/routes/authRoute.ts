@@ -13,7 +13,7 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 
 router.post('/register', register);
-router.get('/users', allUsers);
+// router.get('/users', allUsers);
 router.post('/login', login);
 router.post('/logout', protect as any, logout);
 

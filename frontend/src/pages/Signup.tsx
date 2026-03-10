@@ -25,7 +25,7 @@ export default function Signup() {
         return;
       }
 
-      const response = await api.post("auth/register", {
+      const response = await api.post("api/auth/register", {
         name: name.trim(),
         email: email.trim(),
         password: password,

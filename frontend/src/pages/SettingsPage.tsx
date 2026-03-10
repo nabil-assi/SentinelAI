@@ -35,7 +35,7 @@ export default function ProfilePage() {
     const fetchUserData = async () => {
       try {
         // الربط مع الباكند لجلب بياناتك الحقيقية
-        const res = await api.get("/auth/me"); // افترضت أن هذا هو الـ endpoint
+        const res = await api.get("/api/auth/me"); // افترضت أن هذا هو الـ endpoint
         if (res.data.success) {
           setUser(res.data.data);
         }
