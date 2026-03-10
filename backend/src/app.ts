@@ -19,7 +19,7 @@ const app = express();
 // --- 1. Middlewares الأساسية (بالترتيب الصحيح) ---
 app.use(helmet()); // للحماية
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:8080', 'http://localhost:3000'],
+  origin: ['http://localhost:5173', 'https://sentinelai-2ra7.onrender.com'],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
