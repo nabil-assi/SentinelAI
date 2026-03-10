@@ -54,14 +54,14 @@ export default function Landing() {
     const fetchHomeStats = async () => {
       try {
         setIsLoading(true);
-        const res = await api.get("/api/home-stats");
+        const res = await api.get("/api/home");
         
         if (res.data.success) {
           setDynamicStats({
             scans: formatNumber(res.data.scans),
             vulnerabilities: formatNumber(res.data.vulnerabilities),
             averageScore: `${Math.round(res.data.averageScore)}%`,
-            scanTime: "<3s" // أو يمكنك جلبها من API إذا كانت متوفرة
+            scanTime: "<4s" 
           });
         }
       } catch (err) {

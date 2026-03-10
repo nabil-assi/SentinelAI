@@ -33,7 +33,14 @@ export default function Signup() {
 
       if (response.data) {
         if (response.data.success === true) {
-          navigate("/login");
+          if (response.data.token) {
+            localStorage.setItem("token", response.data.token);
+            console.log("Token saved successfully!");
+          } else {
+            console.error("Token not found in response:", response.data);
+          }
+          navigate("/dashboard");
+          // navigate("/login");
         } else {
           setError(response.data.message || "Signup failed");
         }

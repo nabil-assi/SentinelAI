@@ -18,7 +18,13 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     data: { email, password: hashedPassword, name }
   });
 
-  res.status(201).json({ message: "User created successfully", userId: user.id, success: true });
+  const token = jwt.sign(
+    { id: user.id, email: user.email },
+    process.env.JWT_SECRET || "default_secret_key",
+    { expiresIn: "1d" }
+  )
+
+  res.status(201).json({ message: "User created successfully", token, userId: user.id, success: true });
 
 });
 
