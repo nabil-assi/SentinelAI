@@ -6,24 +6,26 @@ import { prisma } from '../lib/prisma';
 import asyncHandler from '../utils/asyncHandler';
 
 
-
 export const getHome = asyncHandler(async (req: Request, res: Response) => {
-    const scans = prisma.scan.count();
-    const vulnerabilities = prisma.vulnerability.count();
-
-    const result = await prisma.scan.aggregate({
-        where: {
-            securityScore: {
-                gt: 0, 
+    const [scansCount, vulnerabilitiesCount, aggregateResult] = await Promise.all([
+        prisma.scan.count(),
+        prisma.vulnerability.count(),
+        prisma.scan.aggregate({
+            where: {
+                securityScore: { gt: 0 },
             },
-        },
-        _avg: {
-            securityScore: true,
-        },
+            _avg: {
+                securityScore: true,
+            },
+        })
+    ]);
+
+    const averageScore = aggregateResult._avg.securityScore || 0;
+
+    res.status(200).json({
+        success: true, 
+        scans: scansCount, 
+        vulnerabilities: vulnerabilitiesCount, 
+        averageScore: Math.round(averageScore)
     });
-
-    const averageScore = result._avg.securityScore || 0;
-
-    res.status(200).json({success: true, scans, vulnerabilities, averageScore});
- 
 });

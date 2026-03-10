@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { register, allUsers, login, googleAuthCallback, userData, logout } from '../controllers/authController';
+import { register, login, googleAuthCallback, logout, getAllUser,getUser } from '../controllers/authController';
 import passport from 'passport';
 import { AuthRequest, protect } from '../middlewares/authMiddleware';
 import { prisma } from '../lib/prisma';
@@ -11,6 +11,9 @@ const router = Router();
 import { OAuth2Client } from 'google-auth-library';
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
+
+router.get('/allUsers', getAllUser);
+router.get('/user/:email', getUser);
 
 router.post('/register', register);
 // router.get('/users', allUsers);

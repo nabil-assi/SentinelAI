@@ -66,7 +66,7 @@ export const googleAuthCallback = asyncHandler(async (req: Request, res: Respons
   // توجيه المستخدم للفرونت إيند
   res.redirect('http://localhost:3000/dashboard?login=success');
 });
-export const allUsers = asyncHandler(async (req: AuthRequest, res: Response) => {
+export const getAllUser = asyncHandler(async (req: AuthRequest, res: Response) => {
 
   const users = await prisma.user.findMany();
   res.status(200).json(users);
@@ -74,15 +74,15 @@ export const allUsers = asyncHandler(async (req: AuthRequest, res: Response) => 
 });
 
 
-export const userData = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const userId = (req as any).user?.id;
+export const getUser = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userEmail = req.params.email;
 
-  if (!userId) {
+  if (!userEmail) {
     return res.status(401).json({ success: false, message: "User not found!" });
   }
   const data = await prisma.user.findFirst({
     where: {
-      id: String(userId),
+      email: String(userEmail),
 
     },
     select: {
