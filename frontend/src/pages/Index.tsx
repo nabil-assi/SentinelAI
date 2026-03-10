@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Shield, Zap, Target, BarChart3, ArrowRight, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import heroBg from "@/assets/hero-bg.jpg";
-import api from "@/api/axios"; // تأكد من وجود إعدادات الأكسيوس لديك
+import api from "@/api/axios";
 
 const features = [
   {
@@ -33,31 +33,45 @@ const fadeUp = {
   }),
 };
 
+// دالة مساعدة لتنسيق الأرقام
+const formatNumber = (num: number): string => {
+  if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M+`;
+  if (num >= 1000) return `${(num / 1000).toFixed(1)}K+`;
+  return `${num}+`;
+};
+
 export default function Landing() {
-  // الحالة الابتدائية للبيانات (تستخدم القيم الأصلية كـ Fallback)
   const [dynamicStats, setDynamicStats] = useState({
     scans: "50K+",
     vulnerabilities: "12K+",
     averageScore: "99.2%",
     scanTime: "<3s"
   });
+  
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchHomeStats = async () => {
       try {
-        const res = await api.get("/api/home-stats"); // تأكد من صحة المسار في الباكيند
+        setIsLoading(true);
+        const res = await api.get("/api/home-stats");
+        
         if (res.data.success) {
           setDynamicStats({
-            scans: `${res.data.scans}`,
-            vulnerabilities: `${res.data.vulnerabilities}`,
+            scans: formatNumber(res.data.scans),
+            vulnerabilities: formatNumber(res.data.vulnerabilities),
             averageScore: `${Math.round(res.data.averageScore)}%`,
-            scanTime: "<3s"
+            scanTime: "<3s" // أو يمكنك جلبها من API إذا كانت متوفرة
           });
         }
       } catch (err) {
-        console.error("Error fetching stats, using defaults.");
+        console.error("Error fetching stats, using defaults:", err);
+        // يمكنك إضافة Toast notification هنا إذا أردت
+      } finally {
+        setIsLoading(false);
       }
     };
+
     fetchHomeStats();
   }, []);
 
@@ -70,7 +84,7 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Nav */}
+      {/* Nav - نفس الكود */}
       <nav className="fixed top-0 inset-x-0 z-50 glass">
         <div className="max-w-6xl mx-auto flex items-center justify-between px-6 h-16">
           <div className="flex items-center gap-2">
@@ -92,7 +106,7 @@ export default function Landing() {
         </div>
       </nav>
 
-      {/* Hero */}
+      {/* Hero - نفس الكود */}
       <section className="relative pt-32 pb-20 overflow-hidden">
         <div className="absolute inset-0 opacity-20">
           <img src={heroBg} alt="" className="w-full h-full object-cover" />
@@ -133,7 +147,7 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Stats - المربوطة بالبيانات الحقيقية */}
+      {/* Stats - مع إضافة حالة التحميل */}
       <section className="py-16 border-y border-border">
         <div className="max-w-5xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8">
           {stats.map((s, i) => (
@@ -146,14 +160,20 @@ export default function Landing() {
               variants={fadeUp}
               className="text-center"
             >
-              <div className="text-3xl font-bold text-gradient">{s.value}</div>
+              <div className="text-3xl font-bold text-gradient">
+                {isLoading ? (
+                  <span className="inline-block w-16 h-8 bg-muted animate-pulse rounded"></span>
+                ) : (
+                  s.value
+                )}
+              </div>
               <div className="text-sm text-muted-foreground mt-1">{s.label}</div>
             </motion.div>
           ))}
         </div>
       </section>
 
-      {/* Features */}
+      {/* Features - نفس الكود */}
       <section className="py-24 px-6">
         <div className="max-w-5xl mx-auto">
           <motion.div
@@ -196,7 +216,7 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Footer */}
+      {/* Footer - نفس الكود */}
       <footer className="border-t border-border py-8 px-6">
         <div className="max-w-5xl mx-auto flex items-center justify-between text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
