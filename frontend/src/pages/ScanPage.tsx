@@ -99,7 +99,7 @@ export default function ScanPage() {
       formData.append("packageLock", selectedFile);
 
       // زيادة وقت الانتظار إلى 10 دقائق (600000ms)
-      const response = await api.post(`/api/scan/analyze/${projectId}`, formData, {
+      const response = await api.post(`api/scan/analyze/${projectId}`, formData, {
         timeout: 600000, // 10 دقائق
         headers: {
           "Content-Type": "multipart/form-data",
