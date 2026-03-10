@@ -43,7 +43,6 @@ export default function ScanPage() {
     "AI-powered vulnerability assessment...",
     "Finalizing security report...",
   ];
- 
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -61,9 +60,7 @@ export default function ScanPage() {
     const file = e.target.files?.[0];
     if (file) {
       if (file.name !== "package.json" && file.name !== "package-lock.json") {
-        setError(
-          "Please select a valid package.json or package-lock.json file!",
-        );
+        setError("Please select a valid package.json or package-lock.json file!");
         return;
       }
       setSelectedFile(file);
@@ -72,33 +69,19 @@ export default function ScanPage() {
   };
 
   const startScan = useCallback(async () => {
+    if (!selectedFile) {
+      setError("File is mandatory! Please select a file to scan.");
+      return;
+    }
+
     setState("scanning");
     setProgress(10);
     setCurrentStep(0);
     setError("");
-    let response;
-    if (selectedFile) {
-      const formData = new FormData();
-      formData.append("packageLock", selectedFile);
-      response = await api.post(`/api/scan/analyze/${projectId}`, formData, {
-        timeout: 600000,
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-    } else {
-      response = await api.post(`/api/scan/analyze/${projectId}`, {});
-    }
-    // if (!selectedFile) {
-    //   setError("File is mandatory! Please select a file to scan.");
-    //   return;
-    // }
-    // setState("scanning");
-    // setProgress(10);
-    // setCurrentStep(0);
-    // setError("");
 
     // محاكاة التقدم البصري
     const interval = setInterval(() => {
-      setProgress((prev) => {
+      setProgress(prev => {
         if (prev < 90) {
           // تحديث الخطوة كل 20%
           if (prev === 30) setCurrentStep(1);
@@ -116,19 +99,15 @@ export default function ScanPage() {
       formData.append("packageLock", selectedFile);
 
       // زيادة وقت الانتظار إلى 10 دقائق (600000ms)
-      const response = await api.post(
-        `/api/scan/analyze/${projectId}`,
-        formData,
-        {
-          timeout: 600000, // 10 دقائق
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+      const response = await api.post(`/api/scan/analyze/${projectId}`, formData, {
+        timeout: 600000, // 10 دقائق
+        headers: {
+          "Content-Type": "multipart/form-data",
         },
-      );
+      });
 
       clearInterval(interval);
-
+      
       if (response.data?.success) {
         setProgress(100);
         setFinalScanId(response.data.scanId);
@@ -136,33 +115,24 @@ export default function ScanPage() {
       } else {
         throw new Error(response.data?.error || "Scan failed");
       }
+      
     } catch (err: any) {
       clearInterval(interval);
       setState("error");
-
+      
       // معالجة الأخطاء بشكل مفهوم
-      if (err.code === "ECONNABORTED") {
-        setError(
-          "Scan is taking longer than expected. The server is still processing your request. Please check the results later.",
-        );
+      if (err.code === 'ECONNABORTED') {
+        setError("Scan is taking longer than expected. The server is still processing your request. Please check the results later.");
       } else if (err.message === "Network Error") {
-        setError(
-          "Cannot connect to server. Please make sure the backend is running.",
-        );
+        setError("Cannot connect to server. Please make sure the backend is running.");
       } else if (err.response?.status === 429) {
-        setError(
-          "Too many scans. Please wait a few minutes before trying again.",
-        );
+        setError("Too many scans. Please wait a few minutes before trying again.");
       } else if (err.response?.status === 413) {
         setError("File too large. Maximum file size is 10MB.");
       } else {
-        setError(
-          err.response?.data?.error ||
-            err.message ||
-            "Analysis failed. Please try again.",
-        );
+        setError(err.response?.data?.error || err.message || "Analysis failed. Please try again.");
       }
-
+      
       console.error("Scan error:", err);
     }
   }, [projectId, selectedFile]);
@@ -212,8 +182,8 @@ export default function ScanPage() {
           >
             <div
               className={`rounded-3xl border-2 border-dashed p-12 text-center transition-all duration-500 ${
-                selectedFile
-                  ? "border-primary/40 bg-primary/5"
+                selectedFile 
+                  ? "border-primary/40 bg-primary/5" 
                   : "border-border hover:bg-secondary/20"
               }`}
             >
@@ -284,7 +254,7 @@ export default function ScanPage() {
               </div>
             )}
 
-            {/* <Button
+            <Button
               onClick={startScan}
               className="w-full h-14 bg-primary text-primary-foreground font-bold text-lg rounded-2xl shadow-xl hover:opacity-90 transition-all disabled:opacity-50"
               disabled={!selectedFile}
@@ -294,24 +264,7 @@ export default function ScanPage() {
               ) : (
                 <Play className="mr-2 h-5 w-5" />
               )}
-              {selectedFile
-                ? `Scan ${selectedFile.name}`
-                : "Select a file to start"}
-            </Button> */}
-
-            <Button
-              onClick={startScan}
-              className="w-full h-14 bg-primary text-primary-foreground font-bold text-lg rounded-2xl shadow-xl"
-            >
-              {selectedFile ? (
-                <>
-                  <Cpu className="mr-2 h-5 w-5" /> Scan Uploaded File
-                </>
-              ) : (
-                <>
-                  <Globe className="mr-2 h-5 w-5" /> Fetch from GitHub & Scan
-                </>
-              )}
+              {selectedFile ? `Scan ${selectedFile.name}` : "Select a file to start"}
             </Button>
           </motion.div>
         )}
@@ -327,9 +280,7 @@ export default function ScanPage() {
                 {progress}%
               </div>
             </div>
-            <h3 className="text-xl font-bold mb-3">
-              Security Analysis in Progress
-            </h3>
+            <h3 className="text-xl font-bold mb-3">Security Analysis in Progress</h3>
             <p className="text-sm text-primary font-mono mb-4 italic">
               {scanSteps[currentStep]}
             </p>
