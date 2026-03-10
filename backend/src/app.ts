@@ -11,6 +11,8 @@ import authRoutes from './routes/authRoute';
 import projectRoutes from './routes/projectRoute';
 import scanRoutes from './routes/scanRoute';
 import dashboardRoute from './routes/dashboardRoute';
+import homeRoute from './routes/homeRoute';
+
 
 dotenv.config();
 
@@ -43,7 +45,7 @@ app.use('/api/dashboard', dashboardRoute);
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/scan', scanRoutes);
-
+app.use('/api/home', homeRoute)
 // --- 4. معالجة الروابط غير الموجودة (404) ---
 app.use((req: Request, res: Response) => {
   res.status(404).json({ success: false, message: "Route not found" });

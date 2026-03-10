@@ -111,8 +111,8 @@ export default function ResultsPage() {
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-8 animate-in fade-in duration-700">
       <Button variant="ghost" asChild className="mb-4 hover:bg-secondary">
-        <Link to={`/dashboard`} className="flex items-center gap-2">
-          <ArrowLeft className="h-4 w-4" /> Back to Dashboard
+        <Link to={`/`} className="flex items-center gap-2">
+          <ArrowLeft className="h-4 w-4" /> Back
         </Link>
       </Button>
 
