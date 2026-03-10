@@ -17,6 +17,7 @@ import ResultsPage from "./pages/ResultsPage";
 import DashboardLayout from "./components/DashboardLayout";
 import NotFound from "./pages/NotFound";
 import SettingsPage from "./pages/SettingsPage";
+import DemoPage from "./pages/ScanResults";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +43,8 @@ const App = () => (
               <Route path="/results/:scanId" element={<ResultsPage />} />
             </Route>
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/demo" element={<DemoPage />} />
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

@@ -94,7 +94,7 @@ export default function Landing() {
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
-              <Link to="/dashboard">
+              <Link to="/demo">
                 <Button size="lg" variant="outline" className="h-12 text-base border-border hover:bg-accent">
                   View Demo
                 </Button>
