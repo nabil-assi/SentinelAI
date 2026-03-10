@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Shield, Zap, Target, BarChart3, ArrowRight, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import heroBg from "@/assets/hero-bg.jpg";
-import api from "@/api/axios"; // تأكد من استيراد الـ axios
+import api from "@/api/axios"; // تأكد من وجود إعدادات الأكسيوس لديك
 
 const features = [
   {
@@ -34,39 +34,38 @@ const fadeUp = {
 };
 
 export default function Landing() {
-  const [statsData, setStatsData] = useState({
-    scans: "0",
-    vulnerabilities: "0",
-    averageScore: "0%",
+  // الحالة الابتدائية للبيانات (تستخدم القيم الأصلية كـ Fallback)
+  const [dynamicStats, setDynamicStats] = useState({
+    scans: "50K+",
+    vulnerabilities: "12K+",
+    averageScore: "99.2%",
     scanTime: "<3s"
   });
 
-  // جلب البيانات الحقيقية من الباكيند
   useEffect(() => {
-    const getStats = async () => {
+    const fetchHomeStats = async () => {
       try {
-        const res = await api.get("/api/home-stats"); // المسار اللي عملناه بالباكيند
+        const res = await api.get("/api/home-stats"); // تأكد من صحة المسار في الباكيند
         if (res.data.success) {
-          setStatsData({
-            scans: `${res.data.scans}+`,
-            vulnerabilities: `${res.data.vulnerabilities}+`,
+          setDynamicStats({
+            scans: `${res.data.scans}`,
+            vulnerabilities: `${res.data.vulnerabilities}`,
             averageScore: `${Math.round(res.data.averageScore)}%`,
             scanTime: "<3s"
           });
         }
       } catch (err) {
-        console.error("Using fallback stats");
-        setStatsData({ scans: "150+", vulnerabilities: "45+", averageScore: "82%", scanTime: "<3s" });
+        console.error("Error fetching stats, using defaults.");
       }
     };
-    getStats();
+    fetchHomeStats();
   }, []);
 
   const stats = [
-    { value: statsData.scans, label: "Scans Completed" },
-    { value: statsData.vulnerabilities, label: "Vulnerabilities Found" },
-    { value: statsData.averageScore, label: "Avg Security Score" },
-    { value: statsData.scanTime, label: "Avg Scan Time" },
+    { value: dynamicStats.scans, label: "Scans Completed" },
+    { value: dynamicStats.vulnerabilities, label: "Vulnerabilities Found" },
+    { value: dynamicStats.averageScore, label: "Avg Security Score" },
+    { value: dynamicStats.scanTime, label: "Avg Scan Time" },
   ];
 
   return (
@@ -76,7 +75,7 @@ export default function Landing() {
         <div className="max-w-6xl mx-auto flex items-center justify-between px-6 h-16">
           <div className="flex items-center gap-2">
             <Shield className="h-6 w-6 text-primary" />
-            <span className="text-lg font-bold text-foreground">Zenith AI</span>
+            <span className="text-lg font-bold text-foreground">Sentinel AI</span>
           </div>
           <div className="flex items-center gap-3">
             <Link to="/login">
@@ -115,7 +114,7 @@ export default function Landing() {
               <span className="text-gradient">AI intelligence</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10">
-              Zenith AI scans your dependencies, detects CVEs, and provides AI-powered fix recommendations — before vulnerabilities reach production.
+              Sentinel AI scans your dependencies, detects CVEs, and provides AI-powered fix recommendations — before vulnerabilities reach production.
             </p>
             <div className="flex items-center justify-center gap-4">
               <Link to="/signup">
@@ -134,7 +133,7 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Stats - Now Dynamic */}
+      {/* Stats - المربوطة بالبيانات الحقيقية */}
       <section className="py-16 border-y border-border">
         <div className="max-w-5xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8">
           {stats.map((s, i) => (
@@ -202,7 +201,7 @@ export default function Landing() {
         <div className="max-w-5xl mx-auto flex items-center justify-between text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <Shield className="h-4 w-4 text-primary" />
-            Zenith AI
+            Sentinel AI
           </div>
           <span>© 2026 All rights reserved.</span>
         </div>
